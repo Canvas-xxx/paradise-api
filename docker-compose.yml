@@ -1,0 +1,11 @@
+version: '2.1'
+
+services:
+  test:
+    image: test
+    build: .
+    environment:
+      NODE_ENV: production
+    restart: always
+    ports:
+      - 8099:8099
