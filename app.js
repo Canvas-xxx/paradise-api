@@ -6,7 +6,7 @@ const os = require('os')
 const bodyParser = require('body-parser')
 
 const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '203.121.143.61',
     port: 3306,
     user: 'root',
     password: 'P@radiseDBA1',
