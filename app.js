@@ -65,7 +65,7 @@ function getStudenList(id, callback) {
 
 function getStudentDetail(id, callback) {
     connection.query('SELECT * FROM STUDENT_INFO '
-    + 'LEFT JOIN SCHOOL_INFO ON STUDENT_INFO.STU_SEQ_ID = SCHOOL_INFO.SCH_SEQ_ID'
+    + 'LEFT JOIN SCHOOL_INFO ON STUDENT_INFO.STU_SCH_SEQ_ID = SCHOOL_INFO.SCH_SEQ_ID '
     + 'WHERE STU_SEQ_ID = "' + id + '" '
     , function(err, rows, fields) {
         if (err) throw err
