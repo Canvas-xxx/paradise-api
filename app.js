@@ -37,7 +37,7 @@ function authenLogin(data, callback) {
     connection.query('SELECT * FROM USER_LOGIN WHERE USER_ID = "' + data['username'] + '" AND USER_PASS = "' + data['password'] + '"',
     function(err, rows, fields) {
         if (err) throw err
-        callback(rows[0])
+        callback(rows)
     })
 }
 
@@ -52,7 +52,7 @@ function updateSenderID(data, callback) {
 function getParentDetail(id, callback) {
     connection.query('SELECT * FROM PARENT_INFO WHERE PAR_SEQ_ID = "' + id + '"', function(err, rows, fields) {
         if (err) throw err
-        callback(rows[0])
+        callback(rows)
     })
 }
 
@@ -66,7 +66,7 @@ function getStudenList(id, callback) {
 function getStudentDetail(id, callback) {
     connection.query('SELECT * FROM STUDENT_INFO WHERE STU_SEQ_ID = "' + id + '"', function(err, rows, fields) {
         if (err) throw err
-        callback(rows[0])
+        callback(rows)
     })
 }
 
@@ -98,7 +98,8 @@ app.post('/authenticationLogin', (req, res) => {
     const username = req.body.username
     let password = req.body.password
 
-    password = Buffer.from(password).toString()
+    // password = Buffer.from(password).toString()
+    password = new Buffer(password).toString('base64')
 
     const data = {
         username: username,
@@ -132,7 +133,7 @@ app.get('/parentDetail', (req, res) => {
     res.writeHead(200, {'Content-Type': 'application/json'})
     getParentDetail(parentId, function(response) {
         getStudenList(parentId, function(resp) {
-            const data = response
+            const data = response[0]
             data['studentList'] = resp
             res.end(JSON.stringify(data))
         })
@@ -145,7 +146,7 @@ app.get('/studentDetail', (req, res) => {
     res.writeHead(200, {'Content-Type': 'application/json'})  
     getStudentDetail(studentId, function(response) {
         getStateStudent(studentId, function(resp) {
-            const data = response
+            const data = response[0]
             data['state'] = resp
             res.end(JSON.stringify(data))
         })
