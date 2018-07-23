@@ -74,7 +74,12 @@ function getStudentDetail(id, callback) {
 }
 
 function getStateStudent(id, callback) {
-    connection.query('SELECT * FROM STUDENT_BUS_TXN WHERE SBT_STU_SEQ_ID = "' + id + '"', function(err, rows, fields) {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    // console.log(today)
+    connection.query('SELECT * FROM STUDENT_BUS_TXN WHERE SBT_STU_SEQ_ID = "' + id + '" '
+    // + 'SBT_DATE_START > ' + today
+    , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
     })
@@ -89,7 +94,7 @@ function getStateDetail(id, callback) {
     + 'WHERE STUDENT_BUS_TXN.SBT_SEQ_ID = "' + id + '"'
     , function(err, rows, fields) {
         if (err) throw err
-        callback(rows[0])
+        callback(rows)
     })
 }
 
@@ -109,9 +114,14 @@ app.post('/authenticationLogin', (req, res) => {
         password: password
     }
 
-    res.writeHead(200, {'Content-Type': 'application/json'})
     authenLogin(data, function(response) {
-        res.end(JSON.stringify(response))
+        if (response.length > 0) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify(response[0]))
+        } else {
+            res.writeHead(422, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ message: 'Invalid username or password.' }))
+        }
     })
 })
 
@@ -124,43 +134,83 @@ app.post('/updateSenderID', (req, res) => {
         senderId: senderId
     }
 
-    res.writeHead(200, {'Content-Type': 'application/json'})
     updateSenderID(data, function(response) {
-        res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
+        if (response) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
+        } else {
+            res.writeHead(503, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ message: 'No content.' }))
+        }
     })
 })
 
 app.get('/parentDetail', (req, res) => {
     const parentId = req.header('id')
-
-    res.writeHead(200, {'Content-Type': 'application/json'})
+    
     getParentDetail(parentId, function(response) {
-        getStudenList(parentId, function(resp) {
-            const data = response[0]
-            data['studentList'] = resp
-            res.end(JSON.stringify(data))
-        })
+        if (response.length > 0) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify(response[0]))
+        } else {
+            res.writeHead(503, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ message: 'No content.' }))
+        }
+    })
+})
+
+app.get('/studentList', (req, res) => {
+    const parentId = req.header('id')
+    
+    getStudenList(parentId, function(response) {
+        if (response.length > 0) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify(response))
+        } else {
+            res.writeHead(503, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ message: 'No content.' }))
+        }
     })
 })
 
 app.get('/studentDetail', (req, res) => {
     const studentId = req.header('id')
 
-    res.writeHead(200, {'Content-Type': 'application/json'})  
     getStudentDetail(studentId, function(response) {
-        getStateStudent(studentId, function(resp) {
-            const data = response[0]
-            data['state'] = resp
-            res.end(JSON.stringify(data))
-        })
+        if (response.length > 0) {
+            res.writeHead(200, {'Content-Type': 'application/json'})  
+            res.end(JSON.stringify(response[0]))
+        } else {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({}))
+        }
+    })
+})
+
+app.get('/stateStudent', (req, res) => {
+    const studentId = req.header('id')
+
+    getStateStudent(studentId, function(response) {
+        if (response.length > 0) {
+            res.writeHead(200, {'Content-Type': 'application/json'})  
+            res.end(JSON.stringify(response))
+        } else {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify([]))
+        }
     })
 })
 
 app.get('/stateDetail', (req, res) => {
     const statetId = req.header('id')
-
-    res.writeHead(200, {'Content-Type': 'application/json'})  
+ 
     getStateDetail(statetId, function(response) {
-        res.end(JSON.stringify(response))
+        if (response.length > 0) {1 
+            res.writeHead(200, {'Content-Type': 'application/json'})  
+            res.end(JSON.stringify(response[0]))
+        } else {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({}))
+        }
     })
 })
