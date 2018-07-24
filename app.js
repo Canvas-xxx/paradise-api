@@ -74,11 +74,10 @@ function getStudentDetail(id, callback) {
 }
 
 function getStateStudent(id, callback) {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    // const today = new Date()
+    // today.setHours(0, 0, 0, 0)
     // console.log(today)
-    connection.query('SELECT * FROM STUDENT_BUS_TXN WHERE SBT_STU_SEQ_ID = "' + id + '" '
-    // + 'SBT_DATE_START > ' + today
+    connection.query('SELECT * FROM STUDENT_BUS_TXN WHERE SBT_STU_SEQ_ID = "' + id + '"'
     , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
@@ -190,7 +189,7 @@ app.get('/studentDetail', (req, res) => {
 app.get('/stateStudent', (req, res) => {
     const studentId = req.header('id')
 
-    getStateStudent(studentId, function(response) {
+    getStateDetail(studentId, function(response) {
         if (response.length > 0) {
             res.writeHead(200, {'Content-Type': 'application/json'})  
             res.end(JSON.stringify(response))
