@@ -34,8 +34,9 @@ if (cluster.isMaster) {
 }
 
 function authenLogin(data, callback) {
-    connection.query('SELECT * FROM USER_LOGIN WHERE USER_ID = "' + data['username'] + '" AND USER_PASS = "' + data['password'] + '"',
-    function(err, rows, fields) {
+    connection.query('SELECT * FROM USER_LOGIN '
+    + 'WHERE USER_ID = "' + data['username'] + '" AND USER_PASS = "' + data['password'] + '"'
+    , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
     })
@@ -57,7 +58,8 @@ function getParentDetail(id, callback) {
 }
 
 function getStudenList(id, callback) {
-    connection.query('SELECT * FROM STUDENT_INFO WHERE STU_PAR_SEQ_ID = "' + id + '"', function (err, rows, fields) {
+    connection.query('SELECT * FROM STUDENT_INFO WHERE STU_PAR_SEQ_ID = "' + id + '"'
+    , function (err, rows, fields) {
         if (err) throw err
         callback(rows)
     })
@@ -66,6 +68,9 @@ function getStudenList(id, callback) {
 function getStudentDetail(id, callback) {
     connection.query('SELECT * FROM STUDENT_INFO '
     + 'LEFT JOIN SCHOOL_INFO ON STUDENT_INFO.STU_SCH_SEQ_ID = SCHOOL_INFO.SCH_SEQ_ID '
+    + 'LEFT JOIN BUS_INFO ON STUDENT_INFO.STU_BUS_SEQ_ID = BUS_INFO.BUS_SEQ_ID '
+    + 'LEFT JOIN TEACHER_INFO ON BUS_INFO.BUS_TECH_SEQ_ID = TEACHER_INFO.TECH_SEQ_ID '
+    + 'LEFT JOIN DRIVER_INFO ON BUS_INFO.BUS_DRV_SEQ_ID = DRIVER_INFO.DRV_SEQ_ID '
     + 'WHERE STU_SEQ_ID = "' + id + '" '
     , function(err, rows, fields) {
         if (err) throw err
@@ -73,24 +78,11 @@ function getStudentDetail(id, callback) {
     })
 }
 
-function getStateStudent(id, callback) {
-    // const today = new Date()
-    // today.setHours(0, 0, 0, 0)
-    // console.log(today)
-    connection.query('SELECT * FROM STUDENT_BUS_TXN WHERE SBT_STU_SEQ_ID = "' + id + '"'
-    , function(err, rows, fields) {
-        if (err) throw err
-        callback(rows)
-    })
-}
-
-function getStateDetail(id, callback) {
-    connection.query('SELECT * FROM STUDENT_BUS_TXN '
-    + 'LEFT JOIN BUS_INFO ON STUDENT_BUS_TXN.SBT_BUS_SEQ_ID = BUS_INFO.BUS_SEQ_ID '
-    + 'LEFT JOIN SCHOOL_INFO ON STUDENT_BUS_TXN.SBT_SCH_SEQ_ID = SCHOOL_INFO.SCH_SEQ_ID '
-    + 'LEFT JOIN TEACHER_INFO ON BUS_INFO.BUS_TECH_SEQ_ID = TEACHER_INFO.TECH_SEQ_ID '
-    + 'LEFT JOIN DRIVER_INFO ON BUS_INFO.BUS_DRV_SEQ_ID = DRIVER_INFO.DRV_SEQ_ID '
-    + 'WHERE STUDENT_BUS_TXN.SBT_SEQ_ID = "' + id + '"'
+function getStateDetailBySelected(studentId, schoolId, callback) {
+    connection.query('SELECT IFNULL(DC.CON_VALUE, ST.STX_STATUS_INFO) AS Status, ST.STX_CREATE_DATE '
+    + 'FROM STUDENT_TNX As ST LEFT JOIN DATA_CONFIG ON DC.CON_KEY = CONCAT("MAPPING.", ST.STX>STATUS_INFO) '
+    + 'WHERE DATE(ST.STX_CREATE_DATE) = CURRENT_DATE AND ST.STX_STU_SEQ_ID = ' + parseInt(studentId)
+    + ' AND ST.STX_SCH_SEQ_ID = ' + parseInt(schoolId)
     , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
@@ -186,27 +178,14 @@ app.get('/studentDetail', (req, res) => {
     })
 })
 
-app.get('/stateStudent', (req, res) => {
-    const studentId = req.header('id')
-
-    getStateDetail(studentId, function(response) {
-        if (response.length > 0) {
-            res.writeHead(200, {'Content-Type': 'application/json'})  
-            res.end(JSON.stringify(response))
-        } else {
-            res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify([]))
-        }
-    })
-})
-
 app.get('/stateDetail', (req, res) => {
-    const statetId = req.header('id')
+    const studentId = req.header('studentId')
+    const schoolId = req.header('schoolId')
  
-    getStateDetail(statetId, function(response) {
+    getStateDetailBySelected(studentId, schoolId, function(response) {
         if (response.length > 0) {1 
             res.writeHead(200, {'Content-Type': 'application/json'})  
-            res.end(JSON.stringify(response[0]))
+            res.end(JSON.stringify(response))
         } else {
             res.writeHead(200, {'Content-Type': 'application/json'})
             res.end(JSON.stringify({}))
