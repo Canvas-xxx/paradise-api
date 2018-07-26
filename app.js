@@ -79,10 +79,10 @@ function getStudentDetail(id, callback) {
 }
 
 function getStateDetailBySelected(studentId, schoolId, callback) {
-    connection.query('SELECT IFNULL(DC.CON_VALUE, ST.STX_STATUS_INFO) AS Status, ST.STX_CREATE_DATE '
-    + 'FROM STUDENT_TNX As ST LEFT JOIN DATA_CONFIG ON DC.CON_KEY = CONCAT("MAPPING.", ST.STX>STATUS_INFO) '
-    + 'WHERE DATE(ST.STX_CREATE_DATE) = CURRENT_DATE AND ST.STX_STU_SEQ_ID = ' + parseInt(studentId)
-    + ' AND ST.STX_SCH_SEQ_ID = ' + parseInt(schoolId)
+    connection.query('SELECT IFNULL(DATA_CONFIG.CON_VALUE, STUDENT_TXN.STX_STATUS_INFO) AS Status, STUDENT_TXN.STX_CREATE_DATE '
+    + 'FROM STUDENT_TXN LEFT JOIN DATA_CONFIG ON DATA_CONFIG.CON_KEY = CONCAT("MAPPING.", STUDENT_TXN.STX_STATUS_INFO) '
+    + 'WHERE DATE(STUDENT_TXN.STX_CREATE_DATE) = CURRENT_DATE AND STUDENT_TXN.STX_STU_SEQ_ID = ' + parseInt(studentId)
+    + ' AND STUDENT_TXN.STX_SCH_SEQ_ID = ' + parseInt(schoolId)
     , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
@@ -183,12 +183,12 @@ app.get('/stateDetail', (req, res) => {
     const schoolId = req.header('schoolId')
  
     getStateDetailBySelected(studentId, schoolId, function(response) {
-        if (response.length > 0) {1 
+        if (response.length > 0) {
             res.writeHead(200, {'Content-Type': 'application/json'})  
             res.end(JSON.stringify(response))
         } else {
             res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({}))
+            res.end(JSON.stringify([]))
         }
     })
 })
