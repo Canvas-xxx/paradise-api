@@ -97,9 +97,6 @@ app.post('/authenticationLogin', (req, res) => {
     const username = req.body.username
     let password = req.body.password
 
-    // password = Buffer.from(password).toString()
-    password = new Buffer(password).toString('base64')
-
     const data = {
         username: username,
         password: password
