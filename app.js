@@ -42,6 +42,14 @@ function authenLogin(data, callback) {
     })
 }
 
+function updateUser(data, callback) {
+    connection.query('UPDATE USER_LOGIN SET USER_PASS = "' + data['password'] + '" WHERE USER_ID = "' + data['username'] + '"'
+    , function(err, rows, fields) {
+        if (err) throw err
+        callback(rows)
+    })
+}
+
 function updateSenderID(data, callback) {
     connection.query('UPDATE USER_LOGIN SET USER_NOTI_ID = "' + data['senderId'] + '" WHERE USER_ID = "' + data['username'] + '"',
     function(err, rows, fields) {
@@ -109,6 +117,26 @@ app.post('/authenticationLogin', (req, res) => {
         } else {
             res.writeHead(422, {'Content-Type': 'application/json'})
             res.end(JSON.stringify({ message: 'Invalid username or password.' }))
+        }
+    })
+})
+
+app.post('/updateUser', (req, res) => {
+    const username = req.body.username
+    const password = req.body.password
+
+    const data = {
+        username: username,
+        password: password
+    }
+
+    updateUser(data, function(response) {
+        if (response) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
+        } else {
+            res.writeHead(503, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ message: 'No content.' }))
         }
     })
 })
