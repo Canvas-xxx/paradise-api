@@ -51,9 +51,17 @@ function updateUser(data, callback) {
 }
 
 function updateSenderID(data, callback) {
-    connection.query('UPDATE USER_LOGIN SET USER_NOTI_ID = "' + data['senderId'] + '" WHERE USER_ID = "' + data['username'] + '"',
+    connection.query('INSERT INTO NOTIFICATION_INFO(NOTI_USER_ID, NOTI_PAR_SEQ_ID, NOTI_SCH_SEQ_ID, NOTI_ID, NOTI_CREATE_BY, NOTI_UPDATE_BY) '
+    + 'VALUES ("' + data['username'] + '", "' + data['parentId'] + '", "' + data['schoolId'] + '", "' + data['senderId'] + '", "' + data['username'] + '", "' + data['username'] + '")',
     function(err, rows, fields) {
         if (err) throw err
+        callback(rows)
+    })
+}
+
+function deleteSenderID(id, callback) {
+    connection.query('DELETE FROM NOTIFICATION_INFO WHERE NOTI_ID = "' + id + '"', function(err, rows, fields) {
+        if(err) throw err
         callback(rows)
     })
 }
@@ -141,17 +149,44 @@ app.post('/updateUser', (req, res) => {
     })
 })
 
+app.get('/notification' , (req, res) => {
+    connection.query('SELECT * FROM NOTIFICATION_INFO',
+    function(err, rows, fields) {
+        if (err) throw err
+        res.writeHead(200, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify(rows))
+    })
+})
+
 app.post('/updateSenderID', (req, res) => {
     const username = req.body.username
     const senderId = req.body.senderId
+    const parentId = req.body.parentId
+    const schoolId = req.body.schoolId
 
     const data = {
         username: username,
-        senderId: senderId
+        senderId: senderId,
+        parentId: parentId,
+        schoolId: schoolId
     }
 
     updateSenderID(data, function(response) {
         if (response) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
+        } else {
+            res.writeHead(503, {'Content-Type': 'application/json'})
+            res.end(JSON.stringify({ message: 'No content.' }))
+        }
+    })
+})
+
+app.delete('/deleteSenderID', (req, res) => {
+    const senderId = req.header('senderId')
+
+    deleteSenderID(senderId, function(response) {
+        if(response) {
             res.writeHead(200, {'Content-Type': 'application/json'})
             res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
         } else {
