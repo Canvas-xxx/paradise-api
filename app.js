@@ -99,6 +99,7 @@ function getStateDetailBySelected(studentId, schoolId, callback) {
     + 'FROM STUDENT_TXN LEFT JOIN DATA_CONFIG ON DATA_CONFIG.CON_KEY = CONCAT("MAPPING.", STUDENT_TXN.STX_STATUS_INFO) '
     + 'WHERE DATE(STUDENT_TXN.STX_CREATE_DATE) = CURRENT_DATE AND STUDENT_TXN.STX_STU_SEQ_ID = ' + parseInt(studentId)
     + ' AND STUDENT_TXN.STX_SCH_SEQ_ID = ' + parseInt(schoolId)
+    + ' ORDER BY STUDENT_TXN.STX_SEQ_ID DESC'
     , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
@@ -118,15 +119,20 @@ app.post('/authenticationLogin', (req, res) => {
         password: password
     }
 
-    authenLogin(data, function(response) {
-        if (response.length > 0) {
-            res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify(response[0]))
-        } else {
-            res.writeHead(422, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ message: 'Invalid username or password.' }))
-        }
-    })
+    try {
+        authenLogin(data, function(response) {
+            if (response.length > 0) {
+                res.writeHead(200, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify(response[0]))
+            } else {
+                res.writeHead(422, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify({ message: 'Invalid username or password.' }))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
 
 app.post('/updateUser', (req, res) => {
@@ -138,25 +144,30 @@ app.post('/updateUser', (req, res) => {
         password: password
     }
 
-    updateUser(data, function(response) {
-        if (response) {
-            res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
-        } else {
-            res.writeHead(503, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ message: 'No content.' }))
-        }
-    })
+    try {
+        updateUser(data, function(response) {
+            if (response) {
+                res.writeHead(200, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify({ message: 'SUCCESS' }))
+            } else {
+                res.writeHead(422, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify({ message: 'Invalid value' }))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
 
-app.get('/notification' , (req, res) => {
-    connection.query('SELECT * FROM NOTIFICATION_INFO',
-    function(err, rows, fields) {
-        if (err) throw err
-        res.writeHead(200, {'Content-Type': 'application/json'})
-        res.end(JSON.stringify(rows))
-    })
-})
+// app.get('/test' , (req, res) => {
+//     connection.query('SELECT * FROM NOTIFICATION_INFO',
+//     function(err, rows, fields) {
+//         if (err) throw err
+//         res.writeHead(200, {'Content-Type': 'application/json'})
+//         res.end(JSON.stringify(rows))
+//     })
+// })
 
 app.post('/updateSenderID', (req, res) => {
     const username = req.body.username
@@ -171,84 +182,110 @@ app.post('/updateSenderID', (req, res) => {
         schoolId: schoolId
     }
 
-    updateSenderID(data, function(response) {
-        if (response) {
-            res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
-        } else {
-            res.writeHead(503, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ message: 'No content.' }))
-        }
-    })
+    try {
+        updateSenderID(data, function(response) {
+            if (response) {
+                res.writeHead(200, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify({ message: 'SUCCESS' }))
+            } else {
+                res.writeHead(422, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify({ message: 'Invalid value' }))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
 
 app.delete('/deleteSenderID', (req, res) => {
     const senderId = req.header('senderId')
 
-    deleteSenderID(senderId, function(response) {
-        if(response) {
-            res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ status: 200, mss: 'SUCCESS' }))
-        } else {
-            res.writeHead(503, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ message: 'No content.' }))
-        }
-    })
+    try {
+        deleteSenderID(senderId, function(response) {
+            if(response) {
+                res.writeHead(200, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify({ message: 'SUCCESS' }))
+            } else {
+                res.writeHead(422, {'Content-Type': 'application/json'})
+                res.end(JSON.stringify({ message: 'Invalid value' }))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
 
 app.get('/parentDetail', (req, res) => {
     const parentId = req.header('id')
-    
-    getParentDetail(parentId, function(response) {
-        if (response.length > 0) {
+
+    try {
+        getParentDetail(parentId, function(response) {
             res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify(response[0]))
-        } else {
-            res.writeHead(503, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ message: 'No content.' }))
-        }
-    })
+            if (response.length > 0) {
+                res.end(JSON.stringify(response[0]))
+            } else {
+                res.end(JSON.stringify({ }))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
 
 app.get('/studentList', (req, res) => {
     const parentId = req.header('id')
-    
-    getStudenList(parentId, function(response) {
-        if (response.length > 0) {
+
+    try {
+        getStudenList(parentId, function(response) {
             res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify(response))
-        } else {
-            res.writeHead(503, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({ message: 'No content.' }))
-        }
-    })
+            if (response.length > 0) {
+                res.end(JSON.stringify(response))
+            } else {
+                res.end(JSON.stringify([  ]))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
 
 app.get('/studentDetail', (req, res) => {
     const studentId = req.header('id')
 
-    getStudentDetail(studentId, function(response) {
-        if (response.length > 0) {
-            res.writeHead(200, {'Content-Type': 'application/json'})  
-            res.end(JSON.stringify(response[0]))
-        } else {
+    try {
+        getStudentDetail(studentId, function(response) {
             res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify({}))
-        }
-    })
+            if (response.length > 0) {
+                res.end(JSON.stringify(response[0]))
+            } else {
+                res.end(JSON.stringify({  }))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
 
 app.get('/stateDetail', (req, res) => {
     const studentId = req.header('studentId')
     const schoolId = req.header('schoolId')
- 
-    getStateDetailBySelected(studentId, schoolId, function(response) {
-        if (response.length > 0) {
-            res.writeHead(200, {'Content-Type': 'application/json'})  
-            res.end(JSON.stringify(response))
-        } else {
-            res.writeHead(200, {'Content-Type': 'application/json'})
-            res.end(JSON.stringify([]))
-        }
-    })
+
+    try {
+        getStateDetailBySelected(studentId, schoolId, function(response) {
+            res.writeHead(200, {'Content-Type': 'application/json'}) 
+            if (response.length > 0) {
+                res.end(JSON.stringify(response))
+            } else {
+                res.end(JSON.stringify([  ]))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
 })
