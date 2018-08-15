@@ -106,6 +106,17 @@ function getStateDetailBySelected(studentId, schoolId, callback) {
     })
 }
 
+function getMessageAnnounce(schoolId, callback) {
+    connection.query('SELECT * FROM MESSAGE_INFO WHERE DATE(MSG_UPDATE_DATE)'
+    + ' BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()'
+    + ' AND MSG_SCH_SEQ_ID = ' + parseInt(schoolId)
+    + ' ORDER BY MSG_SEQ_ID DESC'
+    , function(err, rows, fields) {
+        if (err) throw err
+        callback(rows)
+    })
+}
+
 app.get('/', (req, res) => {
     res.end(JSON.stringify('Welcome'))
 })
@@ -159,15 +170,6 @@ app.post('/updateUser', (req, res) => {
         res.end(JSON.stringify({ message: 'No content.' }))
     }
 })
-
-// app.get('/test' , (req, res) => {
-//     connection.query('SELECT * FROM NOTIFICATION_INFO',
-//     function(err, rows, fields) {
-//         if (err) throw err
-//         res.writeHead(200, {'Content-Type': 'application/json'})
-//         res.end(JSON.stringify(rows))
-//     })
-// })
 
 app.post('/updateSenderID', (req, res) => {
     const username = req.body.username
@@ -279,6 +281,24 @@ app.get('/stateDetail', (req, res) => {
         getStateDetailBySelected(studentId, schoolId, function(response) {
             res.writeHead(200, {'Content-Type': 'application/json'}) 
             if (response.length > 0) {
+                res.end(JSON.stringify(response))
+            } else {
+                res.end(JSON.stringify([  ]))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
+})
+
+app.get('/getAnnounce', (req, res) => {
+    const schoolId = req.header('schoolId')
+
+    try {
+        getMessageAnnounce(schoolId, function(response) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            if(response.length > 0) {
                 res.end(JSON.stringify(response))
             } else {
                 res.end(JSON.stringify([  ]))
