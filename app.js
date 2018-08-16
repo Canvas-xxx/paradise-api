@@ -43,10 +43,10 @@ function authenLogin(data, callback) {
 }
 
 function updateUser(data, callback) {
-    connection.query('UPDATE USER_LOGIN SET USER_PASS = "' + data['password']
-    + ', USER_UPDATE_BY = "' + data['username']
-    + ', USER_UPDATE_DATE = "' + new Date()
-    + '" WHERE USER_ID = "' + data['username'] + '"'
+    connection.query('UPDATE USER_LOGIN SET USER_PASS = "' + data['password'] + '"'
+    + ', USER_UPDATE_BY = "' + data['username'] + '"'
+    + ', USER_UPDATE_DATE = "' + new Date() + '"'
+    + ' WHERE USER_ID = "' + data['username'] + '"'
     , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
