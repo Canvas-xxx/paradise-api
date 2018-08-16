@@ -45,7 +45,7 @@ function authenLogin(data, callback) {
 function updateUser(data, callback) {
     connection.query('UPDATE USER_LOGIN SET USER_PASS = "' + data['password'] + '"'
     + ', USER_UPDATE_BY = "' + data['username'] + '"'
-    + ', USER_UPDATE_DATE = "' + new Date() + '"'
+    + ', USER_UPDATE_DATE = CURRENT_TIMESTAMP'
     + ' WHERE USER_ID = "' + data['username'] + '"'
     , function(err, rows, fields) {
         if (err) throw err
@@ -297,7 +297,6 @@ app.get('/stateDetail', (req, res) => {
 
 app.get('/getAnnounce', (req, res) => {
     const schoolId = req.header('schoolId')
-
     try {
         getMessageAnnounce(schoolId, function(response) {
             res.writeHead(200, {'Content-Type': 'application/json'})
