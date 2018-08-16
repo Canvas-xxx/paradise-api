@@ -54,8 +54,8 @@ function updateUser(data, callback) {
 }
 
 function updateSenderID(data, callback) {
-    connection.query('INSERT INTO NOTIFICATION_INFO(NOTI_USER_ID, NOTI_PAR_SEQ_ID, NOTI_SCH_SEQ_ID, NOTI_ID, NOTI_CREATE_BY, NOTI_UPDATE_BY) '
-    + 'VALUES ("' + data['username'] + '", "' + data['parentId'] + '", "' + data['schoolId'] + '", "' + data['senderId'] + '", "' + data['username'] + '", "' + data['username'] + '")',
+    connection.query('INSERT INTO NOTIFICATION_INFO(NOTI_USER_ID, NOTI_PAR_SEQ_ID, NOTI_SCH_SEQ_ID, NOTI_ID, NOTI_CREATE_BY, NOTI_UPDATE_BY, NOTI_CREATE_DATE, NOTI_UPDATE_Date) '
+    + 'VALUES ("' + data['username'] + '", "' + data['parentId'] + '", "' + data['schoolId'] + '", "' + data['senderId'] + '", "' + data['username'] + '", "' + data['username'] + '", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
     function(err, rows, fields) {
         if (err) throw err
         callback(rows)
@@ -97,12 +97,20 @@ function getStudentDetail(id, callback) {
     })
 }
 
-function getStateDetailBySelected(studentId, schoolId, callback) {
-    connection.query('SELECT IFNULL(DATA_CONFIG.CON_VALUE, STUDENT_TXN.STX_STATUS_INFO) AS Status, STUDENT_TXN.STX_CREATE_DATE '
-    + 'FROM STUDENT_TXN LEFT JOIN DATA_CONFIG ON DATA_CONFIG.CON_KEY = CONCAT("MAPPING.", STUDENT_TXN.STX_STATUS_INFO) '
-    + 'WHERE DATE(STUDENT_TXN.STX_CREATE_DATE) = CURRENT_DATE AND STUDENT_TXN.STX_STU_SEQ_ID = ' + parseInt(studentId)
-    + ' AND STUDENT_TXN.STX_SCH_SEQ_ID = ' + parseInt(schoolId)
-    + ' ORDER BY STUDENT_TXN.STX_SEQ_ID DESC'
+function getStateDetailBySelected(studentId, schoolId, techId, callback) {
+    connection.query('SELECT(CASE WHEN TI.TXN_TYPE = "STUDENT" THEN SI.STU_NAME_TH'
+    + ' WHEN TI.TXN_TYPE = "TEACHER" THEN TEI.TECH_NAME END) NAME,'
+    + ' IFNULL(DC.CON_VALUE, TI.TXN_STATUS_INFO) AS Status,'
+    + ' TI.TXN_CREATE_DATE AS DATE FROM TRANSACTION_INFO TI'
+    + ' LEFT JOIN DATA_CONFIG DC ON DC.CON_KEY = CONCAT("MAPPING.",'
+    + ' TI.TXN_STATUS_INFO) LEFT JOIN STUDENT_INFO SI ON SI.STU_SEQ_ID ='
+    + ' (CASE WHEN(TI.TXN_TYPE = "STUDENT") THEN TI.TXN_TYPE_SEQ_ID END)'
+    + ' LEFT JOIN  TEACHER_INFO TEI ON TEI.TECH_SEQ_ID = (CASE WHEN (TI.TXN_TYPE = "TEACHER")'
+    + ' THEN TI.TXN_TYPE_SEQ_ID END)'
+    + ' WHERE DATE(TI.TXN_CREATE_DATE) = CURRENT_DATE AND (CASE WHEN TI.TXN_TYPE = "STUDENT"'
+    + ' THEN TI.TXN_TYPE_SEQ_ID = ' + parseInt(studentId) + ' WHEN TI.TXN_TYPE = "TEACHER"'
+    + ' THEN TI.TXN_TYPE_SEQ_ID = ' + parseInt(techId) + ' END) AND TI.TXN_SCH_SEQ_ID = ' + parseInt(schoolId)
+    + ' ORDER BY TI.TXN_SEQ_ID DESC'
     , function(err, rows, fields) {
         if (err) throw err
         callback(rows)
@@ -279,9 +287,10 @@ app.get('/studentDetail', (req, res) => {
 app.get('/stateDetail', (req, res) => {
     const studentId = req.header('studentId')
     const schoolId = req.header('schoolId')
+    const techId = req.header('techId')
 
     try {
-        getStateDetailBySelected(studentId, schoolId, function(response) {
+        getStateDetailBySelected(studentId, schoolId, techId, function(response) {
             res.writeHead(200, {'Content-Type': 'application/json'}) 
             if (response.length > 0) {
                 res.end(JSON.stringify(response))
