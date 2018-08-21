@@ -128,6 +128,15 @@ function getMessageAnnounce(schoolId, callback) {
     })
 }
 
+function getBusLocation(busId, schoolId, callback) {
+    connection.query('SELECT POSB_LATITUDE, POSB_LONGITUDE FROM POSITION_BUS_INFO'
+    + ' WHERE POSB_BUS_SEQ_ID = ' + parseInt(busId) + ' AND POSB_SCH_SEQ_ID = ' + parseInt(schoolId)
+    , function(err, rows, fields) {
+        if (err) throw err
+        callback(rows)
+    })
+}
+
 app.get('/', (req, res) => {
     res.end(JSON.stringify('Welcome'))
 })
@@ -313,6 +322,25 @@ app.get('/getAnnounce', (req, res) => {
                 res.end(JSON.stringify(response))
             } else {
                 res.end(JSON.stringify([  ]))
+            }
+        })
+    } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
+})
+
+app.get('/getBusLocation', (req, res) => {
+    const busId = req.header('busId')
+    const schoolId = req.header('schoolId')
+
+    try {
+        getBusLocation(busId, schoolId, function(response) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            if(response.length > 0) {
+                res.end(JSON.stringify(response[0]))
+            } else {
+                res.end(JSON.stringify({ }))
             }
         })
     } catch(e) {
