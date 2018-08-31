@@ -137,6 +137,22 @@ function getBusLocation(busId, schoolId, callback) {
     })
 }
 
+function getScoreExam(studentId, className, schoolId, callback) {
+    studentId = parseInt(studentId)
+    schoolId = parseInt(schoolId)
+    connection.query('SELECT * FROM SCORES_EXAM INNER JOIN STUDENT_INFO SI' 
+    + ' ON SCORES_EXAM.SCRE_STU_SEQ_ID = SI.STU_SEQ_ID AND SI.STU_SCH_SEQ_ID = SCORES_EXAM.SCRE_SCH_SEQ_ID'
+    + ' AND SI.STU_CLASS = SCORES_EXAM.SCRE_STU_CLASS'
+    + ' WHERE SCORES_EXAM.SCRE_STU_SEQ_ID = ' + studentId
+    + ' AND SCORES_EXAM.SCRE_STU_CLASS = "' + className + '"'
+    + ' AND SCORES_EXAM.SCRE_SCH_SEQ_ID = ' + schoolId
+    + ' ORDER BY SCORES_EXAM.SCRE_ROUND ,SCORES_EXAM.SCRE_SUBJECT, SCORES_EXAM.SCRE_EXAM_DATE'
+    , function(err, rows, fields) {
+        if (err) throw err
+        callback(rows)
+    })
+}
+
 app.get('/', (req, res) => {
     res.end(JSON.stringify('Welcome'))
 })
@@ -344,6 +360,27 @@ app.get('/getBusLocation', (req, res) => {
             }
         })
     } catch(e) {
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
+})
+
+app.post('/getScoreExam', (req, res) => {
+    const studentId = req.body.studentId
+    const className = req.body.className
+    const schoolId = req.body.schoolId
+
+    try {
+        getScoreExam(studentId, className, schoolId, function(response) {
+            res.writeHead(200, {'Content-Type': 'application/json'})
+            if(response.length > 0) {
+                res.end(JSON.stringify(response))
+            } else {
+                res.end(JSON.stringify([]))
+            }
+        })
+    } catch(e) {
+        console.log(e)
         res.writeHead(503, {'Content-Type': 'application/json'})
         res.end(JSON.stringify({ message: 'No content.' }))
     }
