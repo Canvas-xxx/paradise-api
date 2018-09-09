@@ -404,6 +404,7 @@ app.post('/getScheduExam', (req, res) => {
 
     try {
         getScheduExam(className, schoolId, (response) => {
+            res.writeHead(200, {'Content-Type': 'application/json'})
             if(response.length > 0) {
                 res.end(JSON.stringify(response))
             } else {
