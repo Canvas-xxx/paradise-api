@@ -153,6 +153,18 @@ function getScoreExam(studentId, className, schoolId, callback) {
     })
 }
 
+function getScheduExam(className, schoolId, callback) {
+    schoolId = parseInt(schoolId)
+    connection.query('SELECT * FROM SCHDULE_EXAM'
+    + ' WHERE SCHE_STU_CLASS = "' + className + '"'
+    + ' AND SCHE_SCH_SEQ_ID = ' + schoolId
+    + ' ORDER BY SCHE_ROUND, SCHE_SUBJECT, SCHE_EXAM_DATE'
+    , function(err, rows, fileds) {
+        if(err) throw err
+        callback(rows)
+    })
+}
+
 app.get('/', (req, res) => {
     res.end(JSON.stringify('Welcome'))
 })
@@ -373,6 +385,25 @@ app.post('/getScoreExam', (req, res) => {
     try {
         getScoreExam(studentId, className, schoolId, function(response) {
             res.writeHead(200, {'Content-Type': 'application/json'})
+            if(response.length > 0) {
+                res.end(JSON.stringify(response))
+            } else {
+                res.end(JSON.stringify([]))
+            }
+        })
+    } catch(e) {
+        console.log(e)
+        res.writeHead(503, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({ message: 'No content.' }))
+    }
+})
+
+app.post('/getScheduExam', (req, res) => {
+    const schoolId = req.body.schoolId
+    const className = req.body.className
+
+    try {
+        getScheduExam(className, schoolId, (response) => {
             if(response.length > 0) {
                 res.end(JSON.stringify(response))
             } else {
